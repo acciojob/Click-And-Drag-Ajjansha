@@ -1,33 +1,58 @@
-// Your code here.
-const slider = document.querySelector('.items');
+const container = document.getElementById("container");
+const cubes = document.querySelectorAll(".cube");
 
-let isDown = false;
-let startX;
-let scrollLeft;
+let activeCube = null;
+let offsetX = 0;
+let offsetY = 0;
 
-slider.addEventListener('mousedown', (e) => {
-  isDown = true;
-  slider.classList.add('active');
+// Initialize cube positions in grid
+cubes.forEach((cube, index) => {
+  const col = index % 4;
+  const row = Math.floor(index / 4);
 
-  startX = e.pageX || e.clientX;
-  scrollLeft = slider.scrollLeft;
+  cube.style.left = `${col * 90}px`;
+  cube.style.top = `${row * 90}px`;
+
+  cube.addEventListener("mousedown", startDrag);
 });
 
-slider.addEventListener('mouseleave', () => {
-  isDown = false;
-  slider.classList.remove('active');
-});
+function startDrag(e) {
+  activeCube = e.target;
+  activeCube.style.cursor = "grabbing";
 
-slider.addEventListener('mouseup', () => {
-  isDown = false;
-  slider.classList.remove('active');
-});
+  const rect = activeCube.getBoundingClientRect();
+  offsetX = e.clientX - rect.left;
+  offsetY = e.clientY - rect.top;
 
-slider.addEventListener('mousemove', (e) => {
-  if (!isDown) return;
-  e.preventDefault();
+  document.addEventListener("mousemove", drag);
+  document.addEventListener("mouseup", stopDrag);
+}
 
-  const x = e.pageX || e.clientX;
-  const walk = (x - startX) * 2; // scroll-fast
-  slider.scrollLeft = scrollLeft - walk;
-});
+function drag(e) {
+  if (!activeCube) return;
+
+  const containerRect = container.getBoundingClientRect();
+
+  let x = e.clientX - containerRect.left - offsetX;
+  let y = e.clientY - containerRect.top - offsetY;
+
+  // Boundary constraints
+  const maxX = container.clientWidth - activeCube.offsetWidth;
+  const maxY = container.clientHeight - activeCube.offsetHeight;
+
+  x = Math.max(0, Math.min(x, maxX));
+  y = Math.max(0, Math.min(y, maxY));
+
+  activeCube.style.left = `${x}px`;
+  activeCube.style.top = `${y}px`;
+}
+
+function stopDrag() {
+  if (!activeCube) return;
+
+  activeCube.style.cursor = "grab";
+  activeCube = null;
+
+  document.removeEventListener("mousemove", drag);
+  document.removeEventListener("mouseup", stopDrag);
+}
